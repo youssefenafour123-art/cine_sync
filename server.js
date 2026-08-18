@@ -259,16 +259,16 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // ── Serve static files (logo.jpg)
-  if (pathname === '/logo.jpg') {
-    const fp = path.join(__dirname, 'logo.jpg');
+  // ── Serve static images
+  if (pathname.endsWith('.jpg') || pathname.endsWith('.png') || pathname.endsWith('.jpeg')) {
+    const fp = path.join(__dirname, pathname);
     fs.readFile(fp, (err, data) => {
       if (err) {
         res.writeHead(404);
         res.end('Not found');
         return;
       }
-      res.writeHead(200, { 'Content-Type': 'image/jpeg' });
+      res.writeHead(200, { 'Content-Type': pathname.endsWith('.png') ? 'image/png' : 'image/jpeg' });
       res.end(data);
     });
     return;
