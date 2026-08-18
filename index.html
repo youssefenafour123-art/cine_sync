@@ -2010,15 +2010,27 @@
     async function buildBackgroundPosters() {
       const container = document.getElementById('bgPostersContainer');
       try {
-        const r = await fetch(`https://api.themoviedb.org/3/trending/all/day?api_key=428989fcece8f15d2077e684a0d952a1`);
-        const data = await r.json();
-        const items = data.results.filter(m => m.poster_path).slice(0, 15);
+        const apiKey = '428989fcece8f15d2077e684a0d952a1';
+        const [r1, r2, r3, r4] = await Promise.all([
+          fetch(`https://api.themoviedb.org/3/trending/all/day?api_key=${apiKey}&page=1`).then(x => x.json()),
+          fetch(`https://api.themoviedb.org/3/trending/all/day?api_key=${apiKey}&page=2`).then(x => x.json()),
+          fetch(`https://api.themoviedb.org/3/trending/all/day?api_key=${apiKey}&page=3`).then(x => x.json()),
+          fetch(`https://api.themoviedb.org/3/trending/all/day?api_key=${apiKey}&page=4`).then(x => x.json())
+        ]);
+        
+        let allResults = [...(r1.results || []), ...(r2.results || []), ...(r3.results || []), ...(r4.results || [])];
+        let items = allResults.filter(m => m.poster_path);
+
+        // Shuffle the unique items
+        for (let i = items.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [items[i], items[j]] = [items[j], items[i]];
+        }
 
         let html = '';
-        // Generate 75 posters to cover ultra-wide monitors
-        for (let i = 0; i < 75; i++) {
-          const item = items[Math.floor(Math.random() * items.length)];
-          html += `<img src="https://image.tmdb.org/t/p/w500${item.poster_path}" alt="">`;
+        const limit = Math.min(items.length, 75);
+        for (let i = 0; i < limit; i++) {
+          html += `<img src="https://image.tmdb.org/t/p/w500${items[i].poster_path}" alt="" style="border-radius: 8px;">`;
         }
         container.innerHTML = html;
       } catch (e) {
