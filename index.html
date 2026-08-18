@@ -1909,6 +1909,15 @@
             <button class="scroll-btn right" onclick="scrollCarousel('carousel-anime-upcoming', 300)">&#10095;</button>
           </div>
         </div>
+        
+        <div class="carousel-section">
+          <div class="carousel-title">Hidden Gems <span style="background: #ff007f;">Niche</span></div>
+          <div class="carousel-wrapper">
+            <button class="scroll-btn left" onclick="scrollCarousel('carousel-anime-gems', -300)">&#10094;</button>
+            <div class="carousel" id="carousel-anime-gems"></div>
+            <button class="scroll-btn right" onclick="scrollCarousel('carousel-anime-gems', 300)">&#10095;</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -2172,7 +2181,7 @@
       document.getElementById('detailsModal').classList.add('active');
 
       // Async fetch IMDb rating
-      if (!isMal) fetchImdbRating(item);
+      fetchImdbRating(item);
 
       // Async fetch missing TMDB details (credits, videos) for Live Search items
       if (typeof item.id === 'number' || (typeof item.id === 'string' && /^\d+$/.test(item.id))) {
@@ -2252,22 +2261,7 @@
       btn.disabled = true;
 
       let finalId = item.id;
-      if (typeof finalId === 'string' && finalId.startsWith('mal:')) {
-        const malId = finalId.replace('mal:', '');
-        try {
-          const r = await fetch(`https://kitsu.io/api/edge/mappings?filter[externalSite]=myanimelist/anime&filter[externalId]=${malId}`);
-          const d = await r.json();
-          if (d && d.data && d.data.length > 0) {
-            const kitsuId = d.data[0].relationships.item.data.id;
-            finalId = 'kitsu:' + kitsuId;
-          } else {
-            console.warn('Could not map to Kitsu ID. Proceeding with kitsu:mal:' + malId);
-            finalId = 'kitsu:' + malId; // fallback
-          }
-        } catch (e) {
-          console.error("Kitsu mapping error:", e);
-        }
-      } else if (typeof finalId === 'number' || (typeof finalId === 'string' && /^\d+$/.test(finalId))) {
+      if (typeof finalId === 'number' || (typeof finalId === 'string' && /^\d+$/.test(finalId))) {
         try {
           const mType = (item.type === 'tv' || item.first_air_date) ? 'tv' : 'movie';
           const r = await fetch(`https://api.themoviedb.org/3/${mType}/${item.id}/external_ids?api_key=${DISCOVERY_TMDB}`);
@@ -3108,21 +3102,36 @@
       document.getElementById('trackerLoading').classList.add('hidden');
       document.getElementById('trackerContent').classList.remove('hidden');
     }
-    // === ANIME TAB LOGIC (Jikan API) ===
+    // === ANIME TAB LOGIC (TMDB API) ===
     async function loadAnimeTab() {
       document.getElementById('animeLoading').classList.remove('hidden');
       document.getElementById('animeContent').classList.add('hidden');
 
       try {
-        const [topRes, currentRes, upcomingRes] = await Promise.all([
-          fetch('https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=15').then(r => r.json()),
-          fetch('https://api.jikan.moe/v4/seasons/now?limit=15').then(r => r.json()),
-          fetch('https://api.jikan.moe/v4/seasons/upcoming?limit=15').then(r => r.json())
+        const TMDB_KEY = '4e44d9029b1270a757cddc766a1bcb63';
+        const today = new Date().toISOString().split('T')[0];
+        const pastDate = new Date();
+        pastDate.setMonth(pastDate.getMonth() - 2);
+        const twoMonthsAgo = pastDate.toISOString().split('T')[0];
+
+        // TMDB Queries strictly for Anime (genre 16, language ja)
+        const topUrl = `https://api.themoviedb.org/3/discover/tv?api_key=${TMDB_KEY}&with_genres=16&with_original_language=ja&sort_by=vote_average.desc&vote_count.gte=1000`;
+        const currentUrl = `https://api.themoviedb.org/3/discover/tv?api_key=${TMDB_KEY}&with_genres=16&with_original_language=ja&first_air_date.gte=${twoMonthsAgo}&first_air_date.lte=${today}&sort_by=popularity.desc`;
+        const upcomingUrl = `https://api.themoviedb.org/3/discover/tv?api_key=${TMDB_KEY}&with_genres=16&with_original_language=ja&first_air_date.gte=${today}&sort_by=popularity.desc`;
+        // Hidden Gems: Highly rated but extremely low vote counts (100-300)
+        const gemsUrl = `https://api.themoviedb.org/3/discover/tv?api_key=${TMDB_KEY}&with_genres=16&with_original_language=ja&sort_by=vote_average.desc&vote_count.gte=100&vote_count.lte=300`;
+
+        const [topRes, currentRes, upcomingRes, gemsRes] = await Promise.all([
+          fetch(topUrl).then(r => r.json()),
+          fetch(currentUrl).then(r => r.json()),
+          fetch(upcomingUrl).then(r => r.json()),
+          fetch(gemsUrl).then(r => r.json())
         ]);
 
-        renderAnimeCarousel(topRes.data, 'carousel-anime-top');
-        renderAnimeCarousel(currentRes.data, 'carousel-anime-current');
-        renderAnimeCarousel(upcomingRes.data, 'carousel-anime-upcoming');
+        await renderAnimeCarousel(topRes.results || [], 'carousel-anime-top');
+        await renderAnimeCarousel(currentRes.results || [], 'carousel-anime-current');
+        await renderAnimeCarousel(upcomingRes.results || [], 'carousel-anime-upcoming');
+        await renderAnimeCarousel(gemsRes.results || [], 'carousel-anime-gems');
 
         document.getElementById('animeLoading').classList.add('hidden');
         document.getElementById('animeContent').classList.remove('hidden');
@@ -3132,43 +3141,55 @@
       }
     }
 
-    function renderAnimeCarousel(items, containerId) {
+    async function renderAnimeCarousel(items, containerId) {
       const container = document.getElementById(containerId);
       container.innerHTML = '';
-      if (!items || items.length === 0) {
+      
+      const validItems = items.filter(m => m.poster_path).slice(0, 20);
+      
+      if (validItems.length === 0) {
         container.innerHTML = '<div style="color:var(--text-muted); padding: 20px;">No anime found.</div>';
         return;
       }
 
-      items.forEach((item, idx) => {
-        // Map Jikan item to our standard appDataCache format
-        const cacheItem = {
-          id: 'mal:' + item.mal_id, // Prefix with mal: to distinguish
-          mal_id: item.mal_id,
-          title: item.title_english || item.title,
-          name: item.title_english || item.title,
-          poster_path: item.images?.jpg?.large_image_url || item.images?.jpg?.image_url,
-          vote_average: item.score,
-          release_date: item.aired?.from,
-          overview: item.synopsis,
-          type: 'anime',
-          videos: item.trailer?.youtube_id ? [{ key: item.trailer.youtube_id }] : []
-        };
-        window.appDataCache[cacheItem.id] = cacheItem;
+      // Re-use our TMDB discovery fetching logic for textless posters & credits
+      const fetchCredits = async (item) => {
+        try {
+          item.type = 'tv';
+          const TMDB_KEY = '4e44d9029b1270a757cddc766a1bcb63';
+          const r = await fetch(`https://api.themoviedb.org/3/tv/${item.id}?api_key=${TMDB_KEY}&append_to_response=credits,videos,images&include_image_language=null,en`).then(x => x.json());
+          const directorObj = r.credits?.crew?.find(c => c.job === 'Director' || c.job === 'Executive Producer');
+          item.director = directorObj ? directorObj.name : '';
+          item.cast = r.credits?.cast?.slice(0, 3).map(c => c.name).join(', ') || '';
+          item.videos = r.videos?.results?.filter(v => v.site === 'YouTube' && v.type === 'Trailer') || [];
+          
+          const textlessPosters = r.images?.posters?.filter(p => p.iso_639_1 === null) || [];
+          if (textlessPosters.length > 0) {
+            textlessPosters.sort((a, b) => b.vote_average - a.vote_average);
+            item.poster_path = textlessPosters[0].file_path;
+          }
+        } catch (e) { }
+        return item;
+      };
 
-        const dateStr = cacheItem.release_date ? new Date(cacheItem.release_date).getFullYear() : 'TBA';
-        const rating = cacheItem.vote_average ? cacheItem.vote_average.toFixed(1) : 'N/A';
+      const enrichedItems = await Promise.all(validItems.map(fetchCredits));
+
+      enrichedItems.forEach((item, idx) => {
+        window.appDataCache[item.id] = item;
+
+        const dateStr = item.first_air_date ? new Date(item.first_air_date).getFullYear() : 'TBA';
+        const rating = item.vote_average ? item.vote_average.toFixed(1) : 'N/A';
+        const poster = `https://image.tmdb.org/t/p/w500${item.poster_path}`;
 
         container.innerHTML += `
-          <div class="carousel-item" style="cursor: pointer; animation: fadeInUp 0.5s ease forwards; animation-delay: ${idx * 0.05}s; opacity: 0;" onclick="openDetails('${cacheItem.id}')">
+          <div class="carousel-item" style="cursor: pointer; animation: fadeInUp 0.5s ease forwards; animation-delay: ${idx * 0.05}s; opacity: 0;" onclick="openDetails('${item.id}')">
             <div class="carousel-poster">
-              <img src="${cacheItem.poster_path}" alt="" onerror="this.src='/logo.jpg'">
+              <img src="${poster}" alt="" onerror="this.src='/logo.jpg'">
               <div class="carousel-badge">⭐ ${rating}</div>
             </div>
             <div class="carousel-info">
-              <div class="carousel-name">${cacheItem.title}</div>
-              <div class="carousel-date">${dateStr} &bull; ${item.type || 'TV'}</div>
-              <div class="carousel-desc">${item.genres ? item.genres.map(g => g.name).join(', ') : ''}</div>
+              <div class="carousel-name">${item.name || item.title}</div>
+              <div class="carousel-date">${dateStr} &bull; TV</div>
             </div>
           </div>
         `;
@@ -3192,8 +3213,15 @@
         container.innerHTML = `<div style="padding: 20px; color: var(--text-muted); text-align: center;" class="pulsing-text">Searching Anime...</div>`;
 
         try {
-          const searchRes = await fetch(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&limit=10`).then(r => r.json());
-          const results = searchRes.data || [];
+          const TMDB_KEY = '4e44d9029b1270a757cddc766a1bcb63';
+          const searchRes = await fetch(`https://api.themoviedb.org/3/search/tv?api_key=${TMDB_KEY}&query=${encodeURIComponent(query)}`).then(r => r.json());
+          
+          // Filter to ensure it's anime (Japanese and Animation genre)
+          const results = (searchRes.results || []).filter(r => 
+            r.poster_path && 
+            r.original_language === 'ja' && 
+            (r.genre_ids || []).includes(16)
+          ).slice(0, 10);
 
           if (results.length === 0) {
             container.innerHTML = `<div style="padding: 20px; color: var(--text-muted); text-align: center;">No anime found for "${query}"</div>`;
@@ -3203,29 +3231,19 @@
           let html = '<div style="display: flex; flex-direction: column; gap: 8px; padding: 12px; max-height: 400px; overflow-y: auto;">';
 
           results.forEach((item, idx) => {
-            const cacheItem = {
-              id: 'mal:' + item.mal_id,
-              mal_id: item.mal_id,
-              title: item.title_english || item.title,
-              name: item.title_english || item.title,
-              poster_path: item.images?.jpg?.large_image_url || item.images?.jpg?.image_url,
-              vote_average: item.score,
-              release_date: item.aired?.from,
-              overview: item.synopsis,
-              type: 'anime',
-              videos: item.trailer?.youtube_id ? [{ key: item.trailer.youtube_id }] : []
-            };
-            window.appDataCache[cacheItem.id] = cacheItem;
+            item.type = 'tv';
+            window.appDataCache[item.id] = item;
 
-            const dateStr = cacheItem.release_date ? new Date(cacheItem.release_date).getFullYear() : 'TBA';
-            const rating = cacheItem.vote_average ? cacheItem.vote_average.toFixed(1) : 'N/A';
+            const dateStr = item.first_air_date ? new Date(item.first_air_date).getFullYear() : 'TBA';
+            const rating = item.vote_average ? item.vote_average.toFixed(1) : 'N/A';
+            const poster = `https://image.tmdb.org/t/p/w200${item.poster_path}`;
 
             html += `
-              <div onclick="openDetails('${cacheItem.id}')" style="display: flex; align-items: center; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 12px; cursor: pointer; border: 1px solid rgba(255,255,255,0.05); transition: all 0.2s ease; animation: fadeInUp 0.3s ease forwards; animation-delay: ${idx * 0.03}s; opacity: 0;" onmouseover="this.style.background='rgba(255,255,255,0.08)'; this.style.borderColor='rgba(255,0,127,0.4)';" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.05)';">
-                <img src="${cacheItem.poster_path}" style="width: 48px; height: 72px; object-fit: cover; border-radius: 8px; margin-right: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);" onerror="this.src='/logo.jpg'">
+              <div onclick="openDetails('${item.id}')" style="display: flex; align-items: center; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 12px; cursor: pointer; border: 1px solid rgba(255,255,255,0.05); transition: all 0.2s ease; animation: fadeInUp 0.3s ease forwards; animation-delay: ${idx * 0.03}s; opacity: 0;" onmouseover="this.style.background='rgba(255,255,255,0.08)'; this.style.borderColor='rgba(255,0,127,0.4)';" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.05)';">
+                <img src="${poster}" style="width: 48px; height: 72px; object-fit: cover; border-radius: 8px; margin-right: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);" onerror="this.src='/logo.jpg'">
                 <div style="flex: 1;">
-                  <div style="font-weight: 600; font-size: 1rem; margin-bottom: 4px; color: white;">${cacheItem.title}</div>
-                  <div style="font-size: 0.85rem; color: rgba(255,255,255,0.6);">${dateStr} &bull; ${item.type || 'TV'} &bull; ⭐ ${rating}</div>
+                  <div style="font-weight: 600; font-size: 1rem; margin-bottom: 4px; color: white;">${item.name}</div>
+                  <div style="font-size: 0.85rem; color: rgba(255,255,255,0.6);">${dateStr} &bull; TV &bull; ⭐ ${rating}</div>
                 </div>
               </div>
             `;
@@ -3249,11 +3267,16 @@
       document.getElementById('animeLoading').innerText = `Searching Anime for "${query}"...`;
 
       try {
-        const searchRes = await fetch(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&limit=15`).then(r => r.json());
+        const TMDB_KEY = '4e44d9029b1270a757cddc766a1bcb63';
+        const searchRes = await fetch(`https://api.themoviedb.org/3/search/tv?api_key=${TMDB_KEY}&query=${encodeURIComponent(query)}`).then(r => r.json());
         
-        document.getElementById('animeSearchSection').style.display = 'block';
-        renderAnimeCarousel(searchRes.data, 'carousel-anime-search');
+        const results = (searchRes.results || []).filter(r => 
+          r.original_language === 'ja' && 
+          (r.genre_ids || []).includes(16)
+        );
 
+        document.getElementById('animeSearchSection').style.display = 'block';
+        await renderAnimeCarousel(results, 'carousel-anime-search');
       } catch (e) {
         document.getElementById('animeLoading').innerText = `Error searching. Please try again.`;
       }
