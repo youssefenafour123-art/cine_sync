@@ -1159,6 +1159,12 @@
     <div id="syncStep" class="card hidden">
       <h2><span>2</span> Sync Watchlist</h2>
 
+      <div class="search-bar-container" style="margin-bottom: 24px;">
+        <input type="text" id="generalSearch" class="search-input" placeholder="Search for any movie or TV series..." oninput="liveSearch()" onkeydown="if(event.key === 'Enter') searchMedia()">
+        <button class="search-btn" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="searchMedia()">Search</button>
+      </div>
+      <div id="liveSearchResults" class="hidden" style="margin-bottom: 24px; background: rgba(0,0,0,0.2); border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);"></div>
+
       <!-- Bookmarklet UI -->
       <div id="bookmarkletUI" class="bookmarklet-box">
         <h3 style="margin-bottom: 8px; font-weight: 500;">Direct Sync via Browser</h3>
@@ -1256,14 +1262,9 @@
       <h2><span>✨</span> Curated Picks</h2>
       <p style="color: var(--text-muted); margin-bottom: 24px; font-size: 0.95rem;">Discover new favorites powered by live intelligence.</p>
 
-      <div class="search-bar-container">
+      <div class="search-bar-container" style="margin-bottom: 24px;">
         <input type="text" id="similarSearch" class="search-input" placeholder="Type a movie or series you love..." onkeydown="if(event.key === 'Enter') searchSimilar()">
         <button class="search-btn" onclick="searchSimilar()">Find Similar</button>
-      </div>
-
-      <div class="search-bar-container" style="margin-top: 15px;">
-        <input type="text" id="generalSearch" class="search-input" placeholder="Search for any movie or TV series..." onkeydown="if(event.key === 'Enter') searchMedia()">
-        <button class="search-btn" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="searchMedia()">Search</button>
       </div>
       
       <div class="vibe-grid">
@@ -2008,6 +2009,65 @@
 
     // === DISCOVERY API LOGIC ===
     const DISCOVERY_TMDB = '4e44d9029b1270a757cddc766a1bcb63';
+    
+    let searchTimeout = null;
+    async function liveSearch() {
+      const query = document.getElementById('generalSearch').value.trim();
+      const container = document.getElementById('liveSearchResults');
+      
+      if(!query) {
+        container.innerHTML = '';
+        container.classList.add('hidden');
+        return;
+      }
+      
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(async () => {
+        container.classList.remove('hidden');
+        container.innerHTML = `<div style="padding: 20px; color: var(--text-muted); text-align: center;">Searching...</div>`;
+        
+        try {
+          const searchRes = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${DISCOVERY_TMDB}&query=${encodeURIComponent(query)}`).then(r => r.json());
+          const results = (searchRes.results || []).filter(r => (r.media_type === 'movie' || r.media_type === 'tv') && r.poster_path).slice(0, 10);
+          
+          if(results.length === 0) {
+            container.innerHTML = `<div style="padding: 20px; color: var(--text-muted); text-align: center;">No results found for "${query}"</div>`;
+            return;
+          }
+
+          let html = '<div class="carousel-container" style="padding: 10px 0;"><div class="carousel-track" style="justify-content: flex-start; padding: 0 10px;">';
+          
+          results.forEach((item, idx) => {
+            const rawDate = item.release_date || item.first_air_date;
+            const dateStr = rawDate ? new Date(rawDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'TBA';
+            const title = item.title || item.name;
+            const rating = item.vote_average ? item.vote_average.toFixed(1) : 'N/A';
+            const poster = `https://image.tmdb.org/t/p/w500${item.poster_path}`;
+            item.type = item.media_type === 'tv' ? 'tv' : 'movie';
+            
+            window.appDataCache[item.id] = item;
+            
+            html += `
+              <div class="carousel-item" style="cursor: pointer; animation: fadeInUp 0.3s ease forwards; animation-delay: ${idx * 0.03}s; opacity: 0; min-width: 140px;" onclick="openDetails('${item.id}')">
+                <div class="carousel-poster">
+                  <img src="${poster}" onerror="this.src='/logo.jpg'">
+                  <div class="carousel-badge">⭐ ${rating}</div>
+                </div>
+                <div class="carousel-info">
+                  <div class="carousel-name">${title}</div>
+                  <div class="carousel-date">${dateStr}</div>
+                </div>
+              </div>
+            `;
+          });
+          
+          html += '</div></div>';
+          container.innerHTML = html;
+        } catch(e) {
+          container.innerHTML = `<div style="padding: 20px; color: var(--text-muted); text-align: center;">Error searching.</div>`;
+        }
+      }, 400);
+    }
 
     async function searchSimilar() {
       const query = document.getElementById('similarSearch').value.trim();
@@ -2050,6 +2110,7 @@
       const query = document.getElementById('generalSearch').value.trim();
       if(!query) return;
       
+      switchTab('discovery');
       document.getElementById('discoveryContent').classList.add('hidden');
       document.getElementById('discoveryLoading').classList.remove('hidden');
       document.getElementById('discoveryLoading').innerText = `Searching for "${query}"...`;
