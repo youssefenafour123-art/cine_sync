@@ -2035,33 +2035,33 @@
             return;
           }
 
-          let html = '<div class="carousel-container" style="padding: 10px 0;"><div class="carousel-track" style="justify-content: flex-start; padding: 0 10px;">';
+          let html = '<div style="display: flex; flex-direction: column; gap: 8px; padding: 12px; max-height: 400px; overflow-y: auto;">';
           
           results.forEach((item, idx) => {
             const rawDate = item.release_date || item.first_air_date;
             const dateStr = rawDate ? new Date(rawDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'TBA';
             const title = item.title || item.name;
             const rating = item.vote_average ? item.vote_average.toFixed(1) : 'N/A';
-            const poster = `https://image.tmdb.org/t/p/w500${item.poster_path}`;
+            const poster = `https://image.tmdb.org/t/p/w200${item.poster_path}`;
             item.type = item.media_type === 'tv' ? 'tv' : 'movie';
             
             window.appDataCache[item.id] = item;
             
             html += `
-              <div class="carousel-item" style="cursor: pointer; animation: fadeInUp 0.3s ease forwards; animation-delay: ${idx * 0.03}s; opacity: 0; min-width: 140px;" onclick="openDetails('${item.id}')">
-                <div class="carousel-poster">
-                  <img src="${poster}" onerror="this.src='/logo.jpg'">
-                  <div class="carousel-badge">⭐ ${rating}</div>
+              <div onclick="openDetails('${item.id}')" style="display: flex; align-items: center; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 12px; cursor: pointer; border: 1px solid rgba(255,255,255,0.05); transition: all 0.2s ease; animation: fadeInUp 0.3s ease forwards; animation-delay: ${idx * 0.03}s; opacity: 0;" onmouseover="this.style.background='rgba(255,255,255,0.08)'; this.style.borderColor='rgba(16,185,129,0.4)';" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.05)';">
+                <img src="${poster}" style="width: 48px; height: 72px; object-fit: cover; border-radius: 8px; margin-right: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);" onerror="this.src='/logo.jpg'">
+                <div style="flex: 1; text-align: left;">
+                  <div style="font-weight: 600; font-size: 1rem; color: #fff; margin-bottom: 4px;">${title}</div>
+                  <div style="font-size: 0.8rem; color: rgba(255,255,255,0.6);">${dateStr}</div>
                 </div>
-                <div class="carousel-info">
-                  <div class="carousel-name">${title}</div>
-                  <div class="carousel-date">${dateStr}</div>
+                <div style="background: rgba(245, 197, 24, 0.15); color: #f5c518; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 600;">
+                  ⭐ ${rating}
                 </div>
               </div>
             `;
           });
           
-          html += '</div></div>';
+          html += '</div>';
           container.innerHTML = html;
         } catch(e) {
           container.innerHTML = `<div style="padding: 20px; color: var(--text-muted); text-align: center;">Error searching.</div>`;
