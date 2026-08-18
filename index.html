@@ -1560,7 +1560,7 @@
       
       let btnsHtml = '';
       if (trailerKey) {
-         btnsHtml += `<button class="hero-btn primary" onclick="playTrailer('${trailerKey}')">▶ Watch Trailer</button>`;
+         btnsHtml += `<button class="hero-btn primary" id="trailerBtn" onclick="playTrailer('${trailerKey}')">▶ Watch Trailer</button>`;
       }
       btnsHtml += `<button class="hero-btn secondary" onclick="addToLibrary('${item.id}', event)">➕ Add to Library</button>`;
       
@@ -1570,6 +1570,37 @@
       
       // Async fetch IMDb rating
       fetchImdbRating(item);
+      
+      // Async fetch missing TMDB details (credits, videos) for Live Search items
+      if (typeof item.id === 'number' || (typeof item.id === 'string' && /^\d+$/.test(item.id))) {
+         if (!item.cast || !item.videos) {
+             const mType = (item.type === 'tv' || item.first_air_date) ? 'tv' : 'movie';
+             fetch(`https://api.themoviedb.org/3/${mType}/${item.id}?api_key=4e44d9029b1270a757cddc766a1bcb63&append_to_response=credits,videos`)
+               .then(r => r.json())
+               .then(data => {
+                   const directorObj = data.credits?.crew?.find(c => c.job === 'Director' || c.job === 'Executive Producer');
+                   item.director = directorObj ? directorObj.name : '';
+                   item.cast = data.credits?.cast?.slice(0, 3).map(c => c.name).join(', ') || '';
+                   item.videos = data.videos?.results?.filter(v => v.site === 'YouTube' && v.type === 'Trailer') || [];
+                   
+                   let newCreditsHtml = '';
+                   if (item.director) newCreditsHtml += `<strong>Director:</strong> ${item.director}<br>`;
+                   if (item.cast) newCreditsHtml += `<strong>Cast:</strong> ${item.cast}`;
+                   if (newCreditsHtml) document.getElementById('detailsCredits').innerHTML = newCreditsHtml;
+                   
+                   if (!trailerKey && item.videos.length > 0 && !document.getElementById('trailerBtn')) {
+                       const trailer = item.videos[0];
+                       const btnsDiv = document.getElementById('detailsBtns');
+                       const newBtn = document.createElement('button');
+                       newBtn.className = 'hero-btn primary';
+                       newBtn.id = 'trailerBtn';
+                       newBtn.onclick = () => playTrailer(trailer.key);
+                       newBtn.innerText = '▶ Watch Trailer';
+                       btnsDiv.insertBefore(newBtn, btnsDiv.firstChild);
+                   }
+               }).catch(e=>{});
+         }
+      }
     }
 
     async function getImdbId(item) {
