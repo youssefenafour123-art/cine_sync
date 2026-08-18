@@ -1291,8 +1291,8 @@
     }
 
     .trailer-container {
-      width: 90%;
-      max-width: 1200px;
+      width: 95%;
+      max-width: 1600px;
       aspect-ratio: 16 / 9;
       background: #000;
       border-radius: 16px;
@@ -2122,8 +2122,8 @@
       if (!key) { alert('No trailer available for this title.'); return; }
       const modal = document.getElementById('trailerModal');
       const frame = document.getElementById('trailerFrame');
-      // Append vq=highres to request the absolute highest quality (4K/8K if available)
-      frame.src = `https://www.youtube.com/embed/${key}?autoplay=1&vq=highres&rel=0&modestbranding=1`;
+      // Use hd=1 and vq=hd1080 as strong hints for YouTube to default to 1080p
+      frame.src = `https://www.youtube.com/embed/${key}?autoplay=1&hd=1&vq=hd1080&rel=0&modestbranding=1`;
       modal.classList.add('active');
     }
 
