@@ -1581,8 +1581,13 @@
       btn.innerHTML = '⏳ Adding...';
       btn.disabled = true;
       
+      let finalId = item.id;
+      if (typeof finalId === 'number' || (typeof finalId === 'string' && /^\d+$/.test(finalId))) {
+        finalId = (item.type === 'tv' || item.first_air_date ? 'tmdb:' : 'tmdb:') + finalId;
+      }
+      
       const result = await libraryPut({
-        id: item.id,
+        id: finalId,
         name: item.title || item.name || 'Unknown',
         type: item.type || (item.title ? 'movie' : 'series')
       });
@@ -1591,7 +1596,7 @@
         btn.innerHTML = '✓ Added to Library';
         btn.style.background = 'rgba(0, 255, 100, 0.2)';
         btn.style.border = '1px solid rgba(0, 255, 100, 0.5)';
-        if (typeof libraryIds !== 'undefined') libraryIds.add(id);
+        if (typeof libraryIds !== 'undefined') libraryIds.add(finalId);
       } else {
         alert("Failed to add to library: " + result.error);
         btn.innerHTML = originalText;
