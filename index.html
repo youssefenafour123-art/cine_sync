@@ -2010,16 +2010,13 @@
     async function buildBackgroundPosters() {
       const container = document.getElementById('bgPostersContainer');
       try {
-        const apiKey = '428989fcece8f15d2077e684a0d952a1';
-        const [r1, r2, r3, r4] = await Promise.all([
-          fetch(`https://api.themoviedb.org/3/trending/all/day?api_key=${apiKey}&page=1`).then(x => x.json()),
-          fetch(`https://api.themoviedb.org/3/trending/all/day?api_key=${apiKey}&page=2`).then(x => x.json()),
-          fetch(`https://api.themoviedb.org/3/trending/all/day?api_key=${apiKey}&page=3`).then(x => x.json()),
-          fetch(`https://api.themoviedb.org/3/trending/all/day?api_key=${apiKey}&page=4`).then(x => x.json())
+        const [movRes, serRes] = await Promise.all([
+          fetch('https://v3-cinemeta.strem.io/catalog/movie/top.json').then(r => r.json()),
+          fetch('https://v3-cinemeta.strem.io/catalog/series/top.json').then(r => r.json())
         ]);
         
-        let allResults = [...(r1.results || []), ...(r2.results || []), ...(r3.results || []), ...(r4.results || [])];
-        let items = allResults.filter(m => m.poster_path);
+        let allResults = [...(movRes.metas || []), ...(serRes.metas || [])];
+        let items = allResults.filter(m => m.poster);
 
         // Shuffle the unique items
         for (let i = items.length - 1; i > 0; i--) {
@@ -2030,22 +2027,11 @@
         let html = '';
         const limit = Math.min(items.length, 75);
         for (let i = 0; i < limit; i++) {
-          html += `<img src="https://image.tmdb.org/t/p/w500${items[i].poster_path}" alt="" style="border-radius: 8px;">`;
+          html += `<img src="${items[i].poster}" alt="" style="border-radius: 8px;">`;
         }
         container.innerHTML = html;
       } catch (e) {
-        // Fallback to static list if TMDB fails
-        const ids = [
-          "tt0111161", "tt0468569", "tt0108052", "tt0068646", "tt0110912",
-          "tt0137523", "tt0120737", "tt1375666", "tt0816692", "tt0109830",
-          "tt0052520", "tt0209144", "tt0120815", "tt0241527", "tt0114369"
-        ];
-        let html = '';
-        for (let i = 0; i < 75; i++) {
-          const id = ids[Math.floor(Math.random() * ids.length)];
-          html += `<img src="https://images.metahub.space/poster/small/${id}/img" alt="">`;
-        }
-        container.innerHTML = html;
+        console.error("Failed to load background posters:", e);
       }
     }
 
