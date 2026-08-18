@@ -1583,7 +1583,18 @@
       
       let finalId = item.id;
       if (typeof finalId === 'number' || (typeof finalId === 'string' && /^\d+$/.test(finalId))) {
-        finalId = (item.type === 'tv' || item.first_air_date ? 'tmdb:' : 'tmdb:') + finalId;
+        try {
+          const mType = (item.type === 'tv' || item.first_air_date) ? 'tv' : 'movie';
+          const r = await fetch(`https://api.themoviedb.org/3/${mType}/${item.id}/external_ids?api_key=${DISCOVERY_TMDB}`);
+          const d = await r.json();
+          if (d && d.imdb_id) {
+            finalId = d.imdb_id;
+          } else {
+            finalId = 'tmdb:' + item.id;
+          }
+        } catch(e) {
+          finalId = 'tmdb:' + item.id;
+        }
       }
       
       const result = await libraryPut({
