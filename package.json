@@ -1,0 +1,13 @@
+{
+  "name": "cine-sync",
+  "version": "1.0.0",
+  "description": "CineSync - IMDb to Stremio Discovery App",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "dependencies": {}
+}
