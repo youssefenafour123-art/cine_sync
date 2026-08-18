@@ -1654,14 +1654,19 @@
     </div>
   </div>
 
-  <div class="container">
-    <header>
-      <h1><img src="/logo.jpg" alt="CineSync Logo" class="logo-img"> Cine<span>Sync</span></h1>
-      <div id="userProfile" class="user-profile hidden">
-        <span id="userName">user@example.com</span>
-        <button onclick="logout()">Sign Out</button>
-      </div>
-    </header>
+  <div class="nav-bar" style="position: sticky; top: 0; display: flex; justify-content: space-between; align-items: center; padding: 20px 5%; z-index: 1000; background: rgba(3, 0, 20, 0.6); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+    <div class="nav-brand" style="cursor: pointer; display: flex; align-items: center; gap: 12px; font-size: 2.2rem; font-weight: 800; color: #fff; text-shadow: 0 0 20px rgba(240, 147, 251, 0.5);" onclick="window.location.reload()">
+      <img src="/logo_v2.jpg" alt="CineSync Logo" style="width: 54px; height: 54px; border-radius: 50%; box-shadow: 0 0 20px var(--primary); object-fit: cover;"> 
+      Cine<span style="background: linear-gradient(135deg, var(--primary-hover), var(--primary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Sync</span>
+    </div>
+    
+    <div id="userProfile" class="user-profile hidden" style="display: flex; align-items: center; gap: 15px;">
+      <span id="userName" style="color: rgba(255,255,255,0.7); font-size: 0.9rem;">user@example.com</span>
+      <button class="hero-btn secondary" style="padding: 6px 16px; font-size: 0.85rem; border-color: rgba(255,255,255,0.1);" onclick="logout()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="container" style="padding-top: 30px;">
 
     <div id="mainNav" class="nav-tabs hidden">
       <button id="tab-sync" class="nav-tab active" onclick="switchTab('sync')">Library Sync</button>
@@ -2091,6 +2096,7 @@
     function showUserProfile(userEmail) {
       document.getElementById('userName').innerText = userEmail;
       document.getElementById('userProfile').classList.remove('hidden');
+      document.getElementById('userProfile').style.display = 'flex';
     }
 
     function logout() {
@@ -2099,6 +2105,7 @@
       authKey = '';
       email = '';
       document.getElementById('userProfile').classList.add('hidden');
+      document.getElementById('userProfile').style.display = 'none'; // Ensure inline hidden handles it
       document.getElementById('mainNav').classList.add('hidden');
       document.getElementById('syncStep').classList.add('hidden');
       document.getElementById('trackerStep').classList.add('hidden');
