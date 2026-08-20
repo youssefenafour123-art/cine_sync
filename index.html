@@ -2305,10 +2305,14 @@
         }
       }
 
+      let finalType = item.type;
+      if (finalType === 'tv') finalType = 'series';
+      if (!finalType) finalType = item.title ? 'movie' : 'series';
+
       const result = await libraryPut({
         id: finalId,
         name: item.title || item.name || 'Unknown',
-        type: item.type || (item.title ? 'movie' : 'series')
+        type: finalType
       });
 
       if (result.ok) {
