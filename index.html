@@ -1656,15 +1656,22 @@
     </div>
   </div>
 
-  <div class="nav-bar" style="position: fixed; top: 0; left: 0; width: 100%; box-sizing: border-box; display: flex; justify-content: space-between; align-items: center; padding: 20px 5%; z-index: 1000; background: rgba(3, 0, 20, 0.6); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
-    <div class="nav-brand" style="cursor: pointer; display: flex; align-items: center; gap: 12px; font-size: 2.2rem; font-weight: 800; color: #fff; text-shadow: 0 0 20px rgba(240, 147, 251, 0.5);" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); switchTab('sync');">
-      <img src="/logo_v2.jpg" alt="CineSync Logo" style="width: 54px; height: 54px; border-radius: 50%; box-shadow: 0 0 20px var(--primary); object-fit: cover;"> 
-      Cine<span style="background: linear-gradient(135deg, var(--primary-hover), var(--primary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Sync</span>
+  <div class="nav-bar"
+    style="position: fixed; top: 0; left: 0; width: 100%; box-sizing: border-box; display: flex; justify-content: space-between; align-items: center; padding: 20px 5%; z-index: 1000; background: rgba(3, 0, 20, 0.6); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+    <div class="nav-brand"
+      style="cursor: pointer; display: flex; align-items: center; gap: 12px; font-size: 2.2rem; font-weight: 800; color: #fff; text-shadow: 0 0 20px rgba(240, 147, 251, 0.5);"
+      onclick="window.scrollTo({top: 0, behavior: 'smooth'}); switchTab('sync');">
+      <img src="/logo_v2.jpg" alt="CineSync Logo"
+        style="width: 54px; height: 54px; border-radius: 50%; box-shadow: 0 0 20px var(--primary); object-fit: cover;">
+      Cine<span
+        style="background: linear-gradient(135deg, var(--primary-hover), var(--primary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Sync</span>
     </div>
-    
+
     <div id="userProfile" class="user-profile hidden" style="display: flex; align-items: center; gap: 15px;">
       <span id="userName" style="color: rgba(255,255,255,0.7); font-size: 0.9rem;">user@example.com</span>
-      <button class="hero-btn secondary" style="padding: 6px 16px; font-size: 0.85rem; border-color: rgba(255,255,255,0.1);" onclick="logout()">Sign Out</button>
+      <button class="hero-btn secondary"
+        style="padding: 6px 16px; font-size: 0.85rem; border-color: rgba(255,255,255,0.1);" onclick="logout()">Sign
+        Out</button>
     </div>
   </div>
 
@@ -1716,8 +1723,7 @@
           Then open your IMDb Watchlist and click it.</p>
 
         <!-- Minified Bookmarklet -->
-        <a href="javascript:(function(){var e=[],t=new Set,r=document.querySelectorAll('.ipc-metadata-list-summary-item');if(r.length||(r=document.querySelectorAll('.lister-item')),r.forEach(r=>{var n=r.querySelector('a[href^=\x22/title/tt\x22]');if(n){var o=n.href.match(/(tt\d+)/);if(o){var i=o[1],a=r.querySelector('.ipc-title__text')||r.querySelector('.lister-item-header a'),c=a?a.textContent.trim().replace(/^\d+\.\s*/,''):'Unknown',l='movie';(r.textContent.includes('TV Series')||r.textContent.includes('TV Mini Series'))&&(l='series'),t.has(i)||(t.add(i),e.push({id:i,name:c,type:l}))}}}),!e.length)return void alert('No IMDb items found! Make sure you are on a Watchlist page.');fetch('http://localhost:3000/api/sync-watchlist',{method:'POST',body:JSON.stringify(e)}).then(e=>e.json()).then(t=>{t.ok?alert('Sent '+e.length+' items to Stremio Sync Tool!'):alert('Error: '+t.error)}).catch(e=>alert('Could not connect to localhost:3000. Is the tool running?'))})();"
-          class="bm-btn" onclick="return false;">Sync to Stremio</a>
+        <a href="#" id="bookmarkletBtn" class="bm-btn" onclick="return false;">Sync to Stremio</a>
 
         <div class="pulsing-text">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -1869,17 +1875,25 @@
 
     <!-- ANIME TAB -->
     <div id="animeStep" class="card hidden">
-      <h2><span style="background: linear-gradient(135deg, #ff007f, #7f00ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">🎌</span> Anime Hub</h2>
-      <p style="color: var(--text-muted); margin-bottom: 24px; font-size: 0.95rem;">Powered by MyAnimeList. Discover Top Anime, New Releases, and Recommendations.</p>
+      <h2><span
+          style="background: linear-gradient(135deg, #ff007f, #7f00ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">🎌</span>
+        Anime Hub</h2>
+      <p style="color: var(--text-muted); margin-bottom: 24px; font-size: 0.95rem;">Powered by MyAnimeList. Discover Top
+        Anime, New Releases, and Recommendations.</p>
 
       <div class="search-bar-container" style="margin-bottom: 24px;">
-        <input type="text" id="animeSearch" class="search-input" placeholder="Search for any Anime (e.g. Attack on Titan)..." oninput="liveAnimeSearch()" onkeydown="if(event.key === 'Enter') searchAnime()">
-        <button class="search-btn" style="background: linear-gradient(135deg, #ff007f, #7f00ff);" onclick="searchAnime()">Search</button>
+        <input type="text" id="animeSearch" class="search-input"
+          placeholder="Search for any Anime (e.g. Attack on Titan)..." oninput="liveAnimeSearch()"
+          onkeydown="if(event.key === 'Enter') searchAnime()">
+        <button class="search-btn" style="background: linear-gradient(135deg, #ff007f, #7f00ff);"
+          onclick="searchAnime()">Search</button>
       </div>
-      <div id="liveAnimeSearchResults" class="hidden" style="margin-bottom: 24px; background: rgba(0,0,0,0.2); border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);"></div>
+      <div id="liveAnimeSearchResults" class="hidden"
+        style="margin-bottom: 24px; background: rgba(0,0,0,0.2); border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
+      </div>
 
       <div id="animeLoading" class="hidden pulsing-text" style="margin: 40px 0;">Loading Anime...</div>
-      
+
       <div id="animeContent" class="hidden">
         <div class="carousel-section" id="animeSearchSection" style="display:none;">
           <div class="carousel-title">Search Results <span style="background: #ff007f;">Hits</span></div>
@@ -1898,7 +1912,7 @@
             <button class="scroll-btn right" onclick="scrollCarousel('carousel-anime-top', 300)">&#10095;</button>
           </div>
         </div>
-        
+
         <div class="carousel-section">
           <div class="carousel-title">Current Season <span style="background: #ff007f;">New</span></div>
           <div class="carousel-wrapper">
@@ -1916,7 +1930,7 @@
             <button class="scroll-btn right" onclick="scrollCarousel('carousel-anime-upcoming', 300)">&#10095;</button>
           </div>
         </div>
-        
+
         <div class="carousel-section">
           <div class="carousel-title">Hidden Gems <span style="background: #ff007f;">Niche</span></div>
           <div class="carousel-wrapper">
@@ -1991,6 +2005,11 @@
 
     // === INIT ===
     function initApp() {
+      // Dynamic Bookmarklet
+      const hostUrl = window.location.origin;
+      const bookmarkletCode = `javascript:(function(){var e=[],t=new Set,r=document.querySelectorAll('.ipc-metadata-list-summary-item');if(r.length||(r=document.querySelectorAll('.lister-item')),r.forEach(r=>{var n=r.querySelector('a[href^="/title/tt"]');if(n){var o=n.href.match(/(tt\\d+)/);if(o){var i=o[1],a=r.querySelector('.ipc-title__text')||r.querySelector('.lister-item-header a'),c=a?a.textContent.trim().replace(/^\\d+\\.\\s*/,''):'Unknown',l='movie';(r.textContent.includes('TV Series')||r.textContent.includes('TV Mini Series'))&&(l='series'),t.has(i)||(t.add(i),e.push({id:i,name:c,type:l}))}}}),!e.length)return void alert('No IMDb items found! Make sure you are on a Watchlist page.');fetch('${hostUrl}/api/sync-watchlist',{method:'POST',body:JSON.stringify(e)}).then(e=>e.json()).then(t=>{t.ok?alert('Sent '+e.length+' items to CineSync Tool!'):alert('Error: '+t.error)}).catch(e=>alert('Could not connect to ${hostUrl}. Is the tool running?'))})();`;
+      document.getElementById('bookmarkletBtn').href = bookmarkletCode;
+
       buildBackgroundPosters();
       cycleQuote();
       setInterval(cycleQuote, 8000);
@@ -2005,7 +2024,7 @@
       }
       setupSSE();
     }
-    
+
     // Run immediately since script is at the end of body
     initApp();
 
@@ -2016,7 +2035,7 @@
           fetch('https://v3-cinemeta.strem.io/catalog/movie/top.json').then(r => r.json()),
           fetch('https://v3-cinemeta.strem.io/catalog/series/top.json').then(r => r.json())
         ]);
-        
+
         let allResults = [...(movRes.metas || []), ...(serRes.metas || [])];
         let items = allResults.filter(m => m.poster);
 
@@ -2169,7 +2188,7 @@
       document.getElementById('detailsBg').style.backgroundImage = bg ? `url('${bg}')` : 'none';
       document.getElementById('detailsPoster').src = poster;
       document.getElementById('detailsTitle').innerText = title;
-      
+
       const isMal = String(item.id).startsWith('mal:');
       const sourceBadge = isMal ? 'MAL' : 'TMDB';
       document.getElementById('detailsMeta').innerHTML = `<span style="background: rgba(13,37,63, 0.6); padding: 4px 8px; border-radius: 4px; border: 1px solid rgba(13,37,63, 0.8);">${sourceBadge} ⭐ ${rating}</span> <span style="margin: 0 4px;">&bull;</span> <span>${dateStr}</span> <span id="imdbRatingSpan"></span>`;
@@ -3154,9 +3173,9 @@
     async function renderAnimeCarousel(items, containerId) {
       const container = document.getElementById(containerId);
       container.innerHTML = '';
-      
+
       const validItems = items.filter(m => m.poster_path).slice(0, 20);
-      
+
       if (validItems.length === 0) {
         container.innerHTML = '<div style="color:var(--text-muted); padding: 20px;">No anime found.</div>';
         return;
@@ -3172,7 +3191,7 @@
           item.director = directorObj ? directorObj.name : '';
           item.cast = r.credits?.cast?.slice(0, 3).map(c => c.name).join(', ') || '';
           item.videos = r.videos?.results?.filter(v => v.site === 'YouTube' && v.type === 'Trailer') || [];
-          
+
           const textlessPosters = r.images?.posters?.filter(p => p.iso_639_1 === null) || [];
           if (textlessPosters.length > 0) {
             textlessPosters.sort((a, b) => b.vote_average - a.vote_average);
@@ -3225,11 +3244,11 @@
         try {
           const TMDB_KEY = '4e44d9029b1270a757cddc766a1bcb63';
           const searchRes = await fetch(`https://api.themoviedb.org/3/search/tv?api_key=${TMDB_KEY}&query=${encodeURIComponent(query)}`).then(r => r.json());
-          
+
           // Filter to ensure it's anime (Japanese and Animation genre)
-          const results = (searchRes.results || []).filter(r => 
-            r.poster_path && 
-            r.original_language === 'ja' && 
+          const results = (searchRes.results || []).filter(r =>
+            r.poster_path &&
+            r.original_language === 'ja' &&
             (r.genre_ids || []).includes(16)
           ).slice(0, 10);
 
@@ -3279,9 +3298,9 @@
       try {
         const TMDB_KEY = '4e44d9029b1270a757cddc766a1bcb63';
         const searchRes = await fetch(`https://api.themoviedb.org/3/search/tv?api_key=${TMDB_KEY}&query=${encodeURIComponent(query)}`).then(r => r.json());
-        
-        const results = (searchRes.results || []).filter(r => 
-          r.original_language === 'ja' && 
+
+        const results = (searchRes.results || []).filter(r =>
+          r.original_language === 'ja' &&
           (r.genre_ids || []).includes(16)
         );
 
@@ -3290,7 +3309,7 @@
       } catch (e) {
         document.getElementById('animeLoading').innerText = `Error searching. Please try again.`;
       }
-      
+
       document.getElementById('animeLoading').classList.add('hidden');
       document.getElementById('animeContent').classList.remove('hidden');
     }
